@@ -1,0 +1,141 @@
+---
+title: "22250711_1500_vPFU-sCFU_KOStrains_SPO1"
+output: html_document
+---
+
+```{r, include=FALSE} 
+
+rm(list = ls())
+#make sure to open under project w/in dataWrangling_code
+#install.packages("vegan")
+#install.packages("tidyverse")
+require("png")
+require("dplyr")
+library("tidyverse")
+require("grid")
+require("tibble")
+require("knitr")
+require("extrafont")
+require("ggrepel");
+require("gridExtra")
+require("contrast")
+require("vegan")
+require("scales")
+
+```
+
+vPFU
+```{r}
+calc.titer <- function(Plaques, Dilution, Plating) {
+  # Ensure plaques and dilution are the same length
+  if (length(Plaques) != length(Dilution)) {
+    stop("Plaques and Dilution vectors must have the same length")
+  }
+  
+  # Compute titer
+  titer <- (Plaques / (10^(-Dilution) * Plating)) * 1000
+  
+  return(titer)
+}
+
+#Change acc to results
+#delta6.SPO1
+Plaques <- c(426,53,7)
+Dilution <- c(3,4,5)
+Plating <- 100
+
+del6.SPO1<- calc.titer(Plaques, Dilution, Plating)
+
+del6.SPO1<- mean(del6.SPO1)
+
+#sigG.spo1.virospores
+Plaques <-c(2)
+Dilution<-c(0)
+Plating<-c(100)
+
+sigG.SPO1<-calc.titer(Plaques, Dilution, Plating)
+
+sigG.SPO1<-mean(sigG.SPO1)
+
+#sigF.spo1.virospores
+Plaques <-c(1)
+Dilution<-c(1)
+Plating<-c(100)
+
+sigF.SPO1<-calc.titer(Plaques, Dilution, Plating)
+
+sigF.SPO1<-mean(sigF.SPO1)
+
+
+```
+sCFU
+```{r}
+calc.titer <- function(Plaques, Dilution, Plating) {
+  # Ensure plaques and dilution are the same length
+  if (length(Plaques) != length(Dilution)) {
+    stop("Plaques and Dilution vectors must have the same length")
+  }
+  
+  # Compute titer
+  titer <- (Plaques / (10^(-Dilution) * Plating)) * 1000
+  
+  return(titer)
+}
+
+#Change acc to results
+#delta6.SPO1.CFU
+Plaques <- c(30,7)
+Dilution <- c(3,4)
+Plating <- 100
+
+
+del6.SPO1.CFU<- calc.titer(Plaques, Dilution, Plating)
+
+del6.SPO1<- mean(del6.SPO1.CFU)
+
+#sigF.SPO1.CFU
+Plaques <- c(1)
+Dilution <- c(1)
+Plating <- 100
+
+
+sigF.SPO1.CFU<- calc.titer(Plaques, Dilution, Plating)
+
+sigF.SPO1<- mean(sigF.SPO1.CFU)
+```
+Graphing
+
+```{r}
+SPOIIE.SPO1<- 0
+
+del6.sd<-sd(del6.SPO1)
+SPOIIE.sd<-0
+sigF.sd<-sd(sigF.SPO1)
+sigG.sd<-sd(sigG.SPO1)
+
+
+df <- data.frame(
+  Strain = c("del6.SPO1", "SPOIIE.SPO1", "sigF.SPO1", "sigG.SPO1"),
+  Titer = c(del6.SPO1, SPOIIE.SPO1, sigF.SPO1, sigG.SPO1)
+)
+
+
+vPFU<-ggplot(df, aes(x = Strain, y = Titer)) +
+  geom_col() + 
+  scale_fill_brewer(palette = "Set1") +  # Adjust colors prn
+scale_y_log10(labels = scientific_format()) +
+    labs(title = "Virospore formation in sporulation gene knockout mutants",
+       x = "Strain",
+       y = "Virospore Titer (vPFU/mL)") +
+  theme_minimal() 
+  
+
+
+
+ggsave("20250711_Virospores.png", plot=vPFU, width = 10, height = 6, dpi = 300)
+vPFU
+
+
+
+```
+

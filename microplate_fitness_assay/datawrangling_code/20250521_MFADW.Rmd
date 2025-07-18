@@ -8,7 +8,6 @@ geometry: margin=2.54cm
 
 
 ```{r, include=FALSE} 
-
 #Setup
 source("C:/Users/parke/OneDrive - Indiana University/GitHub/RSetup.R")
 

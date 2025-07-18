@@ -1,0 +1,202 @@
+---
+title: "22250711_1500_vPFU-sCFU_KOStrains_SPO1"
+output: html_document
+---
+
+```{r, include=FALSE} 
+
+rm(list = ls())
+#install.packages("vegan")
+#install.packages("tidyverse")
+require("png")
+require("dplyr")
+library("tidyverse")
+require("grid")
+require("tibble")
+require("knitr")
+require("extrafont")
+require("ggrepel");
+require("gridExtra")
+require("contrast")
+require("vegan")
+require("scales")
+
+calc.titer <- function(Plaques, Dilution, Plating) {
+  # Ensure plaques and dilution are the same length
+  if (length(Plaques) != length(Dilution)) {
+    stop("Plaques and Dilution vectors must have the same length")
+  }
+  
+  # Compute titer
+  titer <- (Plaques / (10^(-Dilution) * Plating)) * 1000
+
+  return(mean(titer))
+}
+
+```
+
+20250711_Jocelyn
+```{r}
+#Virospore count
+#delta6.virospores
+Plaques <- c(612, 82)
+Dilution <- c(2, 3)
+Plating <- 100
+del6<- calc.titer(Plaques, Dilution, Plating)
+
+#sigG.virospores
+Plaques <-c(1)
+Dilution<-c(0)
+Plating<-c(100)
+sigG<- calc.titer(Plaques, Dilution, Plating)
+
+#sigF and SPOIIE were both 0
+sigF<- 0
+SPOIIE<- 0
+
+#CFU count (if available)
+#delta6
+#Plaques <- c(30,2)
+#Dilution <- c(2,3)
+#Plating <- 100
+#sdel6<-calc.titer(Plaques, Dilution, Plating)
+
+#all sporulation mutants were 0, so I don't think this is a good way to measure virospore efficiency, so we'll do it relative instead of normalized
+
+#make as vectors/matrices
+strain<-c("del6", "sigF", "sigG", "SPOIIE")
+rep1<-c(del6, sigF, sigG, SPOIIE)
+
+```
+
+20250711_Caroline
+```{r}
+#now I'm rewriting the strain-based titer data but into rep2
+
+#virospores
+#delta6.virospores
+Plaques <- c(1148, 234, 17)
+Dilution <- c(2, 3, 4)
+Plating <- 100
+del6<-calc.titer(Plaques, Dilution, Plating)
+
+#sigF.virospore
+Plaques <- c(3)
+Dilution <- c(0)
+Plating <- 100
+
+#sigG.virospores
+Plaques <- c(3, 1)
+Dilution <- c(0, 1)
+Plating <- 100
+
+#SPOIIE.virospores
+SPOIIE<-0
+
+
+#make as vectors/matrices
+strain<-c("del6", "sigF", "sigG", "SPOIIE")
+rep2<-c(del6, sigF, sigG, SPOIIE)
+```
+
+
+20250716_Jocelyn
+```{r}
+#rwrite to rep3
+#virospores
+#delta6.virospores
+Plaques <- c(426,53,7)
+Dilution <- c(3,4,5)
+Plating <- 100
+del6<-calc.titer(Plaques, Dilution, Plating)
+
+#sigF.virospore
+Plaques <-c(1)
+Dilution<-c(1)
+Plating<-c(100)
+
+#sigG.virospores
+Plaques <-c(2)
+Dilution<-c(0)
+Plating<-c(100)
+
+#SPOIIE.virospores
+SPOIIE<-0
+
+
+#make as vectors/matrices
+strain<-c("del6", "sigF", "sigG", "SPOIIE")
+rep3<-c(del6, sigF, sigG, SPOIIE)
+
+```
+
+
+20250716_Caroline
+```{r}
+#rwrite to rep4
+#virospores
+#delta6.virospores
+Plaques <- c(492,51,4)
+Dilution <- c(3,4,5)
+Plating <- 100
+del6<-calc.titer(Plaques, Dilution, Plating)
+
+#sigF.virospore
+sigF<-0
+
+#sigG.virospores
+Plaques <-c(1)
+Dilution<-c(0)
+Plating<-c(100)
+
+#SPOIIE.virospores
+SPOIIE<-0
+
+
+#make as vectors/matrices
+strain<-c("del6", "sigF", "sigG", "SPOIIE")
+rep4<-c(del6, sigF, sigG, SPOIIE)
+
+```
+
+
+Graphing
+```{r}
+all<- data.frame(strain, rep1, rep2, rep3, rep4)
+all$average<-rowMeans(all[, c("rep1", "rep2", "rep3", "rep4")])
+all$sd <- apply(all[, c("rep1", "rep2", "rep3", "rep4")], 1, sd)
+
+ex1<-data.frame(all$strain, all$rep1, all$rep2)
+ex1$average<-rowMeans(ex1[, c("all.rep1", "all.rep2")])
+ex1<-data.frame(all$strain, all$rep3, all$rep4)
+ex1$average<-rowMeans(ex2[, c("all.rep3", "all.rep4")])
+
+ggplot(all, aes(x = strain, y = average)) +
+  geom_bar(stat = "identity", fill = "skyblue", width = 0.6) +
+  geom_errorbar(aes(ymin = average - sd, ymax = average + sd), width = 0.2) +
+  labs(title = "Virospore formation in sporulation gene knockout mutants",
+       x = "Strain",
+       y = "Virospore Titer (vPFU/mL)") +
+  theme_minimal()
+
+ggplot(ex1, aes(x = strain, y = average)) +
+  geom_bar(stat = "identity", fill = "skyblue", width = 0.6) +
+  scale_y_log10(labels = scientific_format()) +
+  labs(title = "Virospore formation in sporulation gene knockout mutants",
+       x = "Strain",
+       y = "Virospore Titer (vPFU/mL)") +
+  theme_minimal()
+
+ggplot(ex2, aes(x = strain, y = average)) +
+  geom_bar(stat = "identity", fill = "skyblue", width = 0.6) +
+  labs(title = "Virospore formation in sporulation gene knockout mutants",
+       x = "Strain",
+       y = "Virospore Titer (vPFU/mL)") +
+  theme_minimal()
+
+ggsave("20250711_Virospores.png", plot=vPFU, width = 10, height = 6, dpi = 300)
+
+
+
+```
+

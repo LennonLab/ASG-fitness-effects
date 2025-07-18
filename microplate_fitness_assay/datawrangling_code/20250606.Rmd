@@ -1,0 +1,141 @@
+---
+title: 'Visualizing data from microplate OD600'
+author: "El Park"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+
+Load and data wrangle 
+```{r, include=FALSE} 
+
+#Setup
+source("C:/Users/parke/OneDrive - Indiana University/GitHub/RSetup.R")
+
+```
+
+Load and wrangle data
+```{r}
+#load data, change date
+data<-read.csv("../data/20250606OD600.csv")
+design<-read.csv("../reference/20250606OD600Design.csv", header=FALSE)
+
+source("C:/Users/parke/OneDrive - Indiana University/GitHub/ASG-fitness-effects/microplate_fitness_assay/datawrangling_code/Functions/wrangle96WP_med.str.inf.R")
+
+```
+
+Prep Data
+```{r}
+#FEP, Fitness Effects of Phage (subtract Ctrl Infection avgs from corr Strain/Media rows)
+# ctrl avgs from od.long
+ctrl_avg <- od.long %>%
+  filter(Infection == "ctrl") %>%  # Keep only control rows
+  group_by(Media, Strain) %>%
+  summarize(ctrl_avg = mean(total.OD, na.rm = TRUE), .groups = "drop")
+# subtract control average
+FEP <- od.long %>%
+  left_join(ctrl_avg, by = c("Media", "Strain")) %>%
+  mutate(total.OD = ctrl_avg - total.OD) %>%
+  select(-ctrl_avg)  # Remove temporary column
+FEP<-FEP%>%  #Fitness effects of Phage
+  filter(!grepl("ctrl", Infection))
+
+
+#FES, Fitness effects of Strain (subtract avg WT values from each corr Media/Infection rows)
+# wt avgs from od.long
+WTavg <- od.long %>%
+  filter(Strain == "WT") %>%  # Keep only control rows
+  group_by(Media, Infection) %>%
+  summarize(WTavg = mean(total.OD, na.rm = TRUE), .groups = "drop")
+# subtract control average
+FES <- od.long %>%
+  left_join(WTavg, by = c("Media", "Infection")) %>%
+  mutate(total.OD = total.OD - WTavg) %>%
+  select(-WTavg)  # Remove temporary column
+FES<-FES%>%  #Fitness effects of Phage
+  filter(!grepl("WT", Strain))
+
+
+```
+
+```{r}
+#Infection vs no infection
+FEPa <- aov(total.OD ~  Strain * Infection , data = FEP)
+summary(FEPa)
+
+#Mutant vs WT
+FESa <- aov(total.OD ~  Strain * Infection , data = FES)
+summary(FESa)
+```
+
+
+Visualize data
+```{r}
+# Order strain categories (if needed)
+custom_order <- c("WT", "SPOIIE", "sigF", "sigG")  # Adjust as needed
+
+setwd('../Output')
+
+
+#Box and Whiskers
+BWLB<-ggplot(subset(FEP, Media == "LB") %>%
+                mutate(Strain = factor(Strain, levels = custom_order)), 
+              aes(x = Strain, y = total.OD, fill = Infection)) +
+  geom_boxplot(aes(group = interaction(Strain, Infection)), 
+               position = position_dodge(width = 0.8)) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1") +  # Adjust colors prn
+  labs(title="Susceptibility of Strains to Specific Phage in LB",x = "Strain", y = "Susceptibility", fill = "Phage") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~Media)
+ggsave("20250606_BWLB.png", plot=BWLB, width = 10, height = 6, dpi = 300)
+BWLB
+
+
+#Line plot
+LPLB<-ggplot(subset(FEP, Media == "LB")%>%
+                mutate(Strain = factor(Strain, levels = custom_order)), aes(x = Strain, y = total.OD, color = Infection, group = Infection)) +
+  stat_summary(fun = mean, geom = "point", size = 3) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
+  stat_summary(fun = mean, geom = "line") +
+  theme_minimal() +
+  labs(title = "Susceptibility of Strains to Infections in LB",
+       x = "Strain",
+       y = "Susceptibility") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.border = element_rect(color = "black", fill = NA, size = 1))
+ggsave("20250606_LPLB.png", plot=LPLB, width = 10, height = 6, dpi = 300)
+LPLB
+
+
+```
+SPOIIE was more susceptible to phage in general in comparison to WT. Not much seems to be known about the functions of sigF-activated genes besides that they are expressed in the early forespore while sigG-activated genes are expressed in the late forespore.
+
+SPO1 and sspSPO1 (the removed sspD gene) behave similarly but it seems sspSPO1 is more virulent than SPO1. I'm curious to see if there's a trade off (like having the sspD gene could lead to higher UV or heat resistance)
+
+Plot OD for ref
+```{r}
+setwd('../Output') #for ggsave
+
+#plot and sort by treatment
+d<-ggplot(OD.long, aes(x = Time, y = OD600, colour = interaction(Media, Infection))) +
+  #geom_line() +
+  theme_minimal() + geom_smooth()+
+  labs(title = "OD600 over Time by Strain", x = "Time", y = "OD600", colour = "Media.Infection") +
+  theme(legend.key.size = unit(0.5, 'cm'), legend.position = "right")+
+  facet_wrap(~Strain)
+ggsave("20250606_Strains.png", plot = d, width = 6, height = 4, dpi = 300)
+print(d)
+
+#plot and sort by infection
+s <- ggplot(OD.long, aes(x = Time, y = OD600, colour = interaction(Strain, Media))) +
+  theme_minimal() + 
+  geom_smooth() +
+  labs(title = "OD600 over Time by Treatment", x = "Time", y = "OD600", colour = "Strain") +
+  theme(legend.key.size = unit(0.5, 'cm'), legend.position = "right") +
+  facet_wrap(~Infection)
+ggsave("20250606_Infection.png", plot = s, width = 6, height = 4, dpi = 300)
+print(s)
+```
+

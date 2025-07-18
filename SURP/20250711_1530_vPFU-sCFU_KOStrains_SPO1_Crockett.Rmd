@@ -1,0 +1,101 @@
+---
+title: "22250711_1500_vPFU-sCFU_KOStrains_SPO1"
+output: html_document
+---
+
+```{r, include=FALSE} 
+
+rm(list = ls())
+#make sure to open under project w/in dataWrangling_code
+#install.packages("vegan")
+#install.packages("tidyverse")
+require("png")
+require("dplyr")
+library("tidyverse")
+require("grid")
+require("tibble")
+require("knitr")
+require("extrafont")
+require("ggrepel");
+require("gridExtra")
+require("contrast")
+require("vegan")
+
+```
+
+vPFU
+```{r}
+#Change acc to results
+#delta6.SPO1
+Plaques <- c(612, 82)
+Dilution <- c(2, 3)
+Plating <- 100
+
+calc.titer <- function(Plaques, Dilution, Plating) {
+  # Ensure plaques and dilution are the same length
+  if (length(Plaques) != length(Dilution)) {
+    stop("Plaques and Dilution vectors must have the same length")
+  }
+  
+  # Compute titer
+  titer <- (Plaques / (10^(-Dilution) * Plating)) * 1000
+  
+  return(titer)
+}
+
+
+del6.SPO1<- calc.titer(Plaques, Dilution, Plating)
+
+del6.SPO1<- mean(del6.SPO1)
+
+#sigG.spo1.virospores
+Plaques <-c(1)
+Dilution<-c(0)
+Plating<-c(100)
+
+calc.titer <- function(Plaques, Dilution, Plating) {
+  # Ensure plaques and dilution are the same length
+  if (length(Plaques) != length(Dilution)) {
+    stop("Plaques and Dilution vectors must have the same length")
+  }
+  
+  # Compute titer
+  titer <- (Plaques / (10^(-Dilution) * Plating)) * 1000
+  
+  return(titer)
+}
+
+sigGspo1<-calc.titer(Plaques, Dilution, Plating)
+
+
+```
+sCFU
+```{r}
+#Change acc to results
+#delta6.SPO1.CFU
+Plaques <- c(30,2)
+Dilution <- c(2,3)
+Plating <- 100
+
+calc.titer <- function(Plaques, Dilution, Plating) {
+  # Ensure plaques and dilution are the same length
+  if (length(Plaques) != length(Dilution)) {
+    stop("Plaques and Dilution vectors must have the same length")
+  }
+  
+  # Compute titer
+  titer <- (Plaques / (10^(-Dilution) * Plating)) * 1000
+  
+  return(titer)
+}
+
+
+del6.SPO1.CFU<- calc.titer(Plaques, Dilution, Plating)
+
+del6.SPO1<- mean(del6.SPO1.CFU)
+```
+
+
+```{r}
+```
+
